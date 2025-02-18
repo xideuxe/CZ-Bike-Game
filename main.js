@@ -4,57 +4,57 @@ class GameScene extends Phaser.Scene {
     }
 
     preload() {
+        // On charge les assets statiques
         this.load.image('ground', 'assets/ground.png');
-        this.load.spritesheet('czbike_anim', 'assets/czbike_spritesheet.png', {
-            frameWidth: 100,
-            frameHeight: 100
-        });
+        this.load.image('czbike', 'assets/czbike.png'); // Remplacé le spritesheet par une image simple
         this.load.image('bear', 'assets/bear.png');
         this.load.image('rug', 'assets/rug.png');
         this.load.image('coin', 'assets/coin.png');
     }
 
     create() {
+        // Sol en mode tileSprite
         this.ground = this.add.tileSprite(400, 550, 800, 100, 'ground');
-        this.czBike = this.physics.add.sprite(100, 450, 'czbike_anim').setScale(0.5);
+
+        // CZ Bike en image statique
+        this.czBike = this.physics.add.sprite(100, 450, 'czbike').setScale(0.5);
         this.czBike.setCollideWorldBounds(true);
 
-        this.anims.create({
-            key: 'pedal',
-            frames: this.anims.generateFrameNumbers('czbike_anim', { start: 0, end: 3 }),
-            frameRate: 10,
-            repeat: -1
-        });
-        this.czBike.play('pedal');
-
+        // Contrôles
         this.cursors = this.input.keyboard.createCursorKeys();
 
+        // Groupes d'obstacles et de pièces
         this.obstacles = this.physics.add.group();
         this.coins = this.physics.add.group();
 
+        // Collisions et overlaps
         this.physics.add.collider(this.czBike, this.obstacles, this.hitObstacle, null, this);
         this.physics.add.overlap(this.czBike, this.coins, this.collectCoin, null, this);
 
+        // Apparition régulière d'obstacles et de pièces
         this.time.addEvent({ delay: 2000, callback: this.spawnObstacle, callbackScope: this, loop: true });
         this.time.addEvent({ delay: 1500, callback: this.spawnCoin, callbackScope: this, loop: true });
 
+        // Score
         this.score = 0;
         this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#FFF' });
     }
 
     update() {
+        // Saut
         if (this.cursors.up.isDown && this.czBike.body.touching.down) {
             this.czBike.setVelocityY(-300);
         }
 
+        // Défilement du sol
         this.ground.tilePositionX += 5;
 
+        // Suppression des obstacles et pièces sortis de l'écran
         this.obstacles.getChildren().forEach(obstacle => {
             if (obstacle.x < -obstacle.width) {
                 obstacle.destroy();
             }
         });
-
         this.coins.getChildren().forEach(coin => {
             if (coin.x < -coin.width) {
                 coin.destroy();
@@ -65,8 +65,7 @@ class GameScene extends Phaser.Scene {
     spawnObstacle() {
         const x = 800;
         const isBear = Math.random() > 0.5;
-        const y = isBear ? 500 : 350; // 500 pour les ours, 350 pour les tapis volants
-        
+        const y = isBear ? 500 : 350; // 500 pour l'ours, 350 pour le tapis volant
         let obstacle = this.obstacles.create(x, y, isBear ? 'bear' : 'rug');
         obstacle.setVelocityX(-200);
     }
@@ -87,7 +86,9 @@ class GameScene extends Phaser.Scene {
 
         this.time.addEvent({
             delay: 2000,
-            callback: () => { this.scene.restart(); },
+            callback: () => {
+                this.scene.restart();
+            },
             callbackScope: this,
             loop: false
         });
@@ -100,6 +101,7 @@ class GameScene extends Phaser.Scene {
     }
 }
 
+// Configuration de Phaser
 const config = {
     type: Phaser.AUTO,
     width: 800,
@@ -114,4 +116,5 @@ const config = {
     scene: GameScene
 };
 
+// Instanciation du jeu
 const game = new Phaser.Game(config);
