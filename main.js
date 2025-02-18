@@ -10,7 +10,7 @@ class GameScene extends Phaser.Scene {
         // Sol
         this.load.image('ground', 'assets/ground.png');
 
-        // CZ Bike (statique)
+        // CZ Bike
         this.load.image('czbike', 'assets/czbike.png');
 
         // Obstacles & pièces
@@ -63,17 +63,19 @@ class GameScene extends Phaser.Scene {
     }
 
     update() {
-        // Saut (flèche haut)
+        // Saut (flèche du haut), seulement si on touche le sol
         if (this.cursors.up.isDown && this.czBike.body.touching.down) {
-            // On augmente l'impulsion de saut pour que ce soit plus visible
-            this.czBike.setVelocityY(-500);
-            console.log('Saut !'); // Vérifie la console pour voir si c’est déclenché
+            this.czBike.setVelocityY(-300);
         }
 
-        // Se baisser (flèche bas)
-        if (this.cursors.down.isDown) {
-            // On force le vélo à descendre plus vite
-            this.czBike.setVelocityY(300);
+        // Se baisser (flèche du bas)
+        // On ne change pas l'image, juste la position Y si on est au sol
+        if (this.cursors.down.isDown && this.czBike.body.touching.down) {
+            this.czBike.y = 480; // Déplace un peu vers le bas
+        }
+        else if (this.czBike.body.touching.down) {
+            // Revenir à la position initiale
+            this.czBike.y = 450;
         }
 
         // Nettoyage hors écran
@@ -90,12 +92,12 @@ class GameScene extends Phaser.Scene {
     }
 
     spawnObstacle() {
-        // Ours ou tapis volant
         const x = 900;
         const isBear = Math.random() > 0.5;
-        const y = isBear ? 520 : 370;
-        let obstacle = this.obstacles.create(x, y, isBear ? 'bear' : 'rug');
-        // On rétrécit un peu plus, pour être sûr
+        const y = isBear ? 520 : 370; 
+        const key = isBear ? 'bear' : 'rug';
+
+        let obstacle = this.obstacles.create(x, y, key);
         obstacle.setScale(isBear ? 0.2 : 0.3);
         obstacle.setVelocityX(-200);
         obstacle.setCollideWorldBounds(false);
@@ -103,10 +105,9 @@ class GameScene extends Phaser.Scene {
 
     spawnCoin() {
         const x = 900;
-        const y = 520;  // Au sol (si tu veux qu’elles soient en l’air, change la valeur)
+        const y = 520; // Les pièces restent au sol
         let coin = this.coins.create(x, y, 'coin');
-        // Encore plus petit
-        coin.setScale(0.1);
+        coin.setScale(0.1); // Pièce plus petite
         coin.setVelocityX(-200);
         coin.setCollideWorldBounds(false);
     }
@@ -121,7 +122,6 @@ class GameScene extends Phaser.Scene {
             fill: '#FF0000'
         }).setOrigin(0.5);
 
-        // Restart après 2s
         this.time.addEvent({
             delay: 2000,
             callback: () => {
@@ -145,10 +145,7 @@ const config = {
     height: 600,
     physics: {
         default: 'arcade',
-        arcade: {
-            gravity: { y: 500 },
-            debug: false
-        }
+        arcade: { gravity: { y: 500 }, debug: false }
     },
     scene: GameScene
 };
