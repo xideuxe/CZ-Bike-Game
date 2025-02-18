@@ -4,13 +4,13 @@ class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        // (Optionnel) background si tu veux
+        // (Optionnel) background
         this.load.image('bg', 'assets/background.png');
 
         // Sol
         this.load.image('ground', 'assets/ground.png');
 
-        // CZ Bike
+        // CZ Bike (statique)
         this.load.image('czbike', 'assets/czbike.png');
 
         // Obstacles & pièces
@@ -63,13 +63,17 @@ class GameScene extends Phaser.Scene {
     }
 
     update() {
-        // Saut
+        // Saut (flèche haut)
         if (this.cursors.up.isDown && this.czBike.body.touching.down) {
-            this.czBike.setVelocityY(-300);
+            // On augmente l'impulsion de saut pour que ce soit plus visible
+            this.czBike.setVelocityY(-500);
+            console.log('Saut !'); // Vérifie la console pour voir si c’est déclenché
         }
-        // Se baisser (optionnel)
+
+        // Se baisser (flèche bas)
         if (this.cursors.down.isDown) {
-            this.czBike.setVelocityY(200);
+            // On force le vélo à descendre plus vite
+            this.czBike.setVelocityY(300);
         }
 
         // Nettoyage hors écran
@@ -86,32 +90,23 @@ class GameScene extends Phaser.Scene {
     }
 
     spawnObstacle() {
-        // On spawn hors écran à droite
+        // Ours ou tapis volant
         const x = 900;
-
-        // Choix aléatoire ours ou tapis
         const isBear = Math.random() > 0.5;
-
-        // Y au sol si ours, dans les airs si tapis
-        const y = isBear ? 520 : 370; 
-        const key = isBear ? 'bear' : 'rug';
-
-        // Création
-        let obstacle = this.obstacles.create(x, y, key);
-        // Réduction de la taille
-        obstacle.setScale( isBear ? 0.2 : 0.3 ); 
-        // Vitesse horizontale
+        const y = isBear ? 520 : 370;
+        let obstacle = this.obstacles.create(x, y, isBear ? 'bear' : 'rug');
+        // On rétrécit un peu plus, pour être sûr
+        obstacle.setScale(isBear ? 0.2 : 0.3);
         obstacle.setVelocityX(-200);
         obstacle.setCollideWorldBounds(false);
     }
 
     spawnCoin() {
         const x = 900;
-        // Au sol
-        const y = 520; 
+        const y = 520;  // Au sol (si tu veux qu’elles soient en l’air, change la valeur)
         let coin = this.coins.create(x, y, 'coin');
-        // Pièce plus petite
-        coin.setScale(0.2);
+        // Encore plus petit
+        coin.setScale(0.1);
         coin.setVelocityX(-200);
         coin.setCollideWorldBounds(false);
     }
