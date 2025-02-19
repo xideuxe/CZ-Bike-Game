@@ -93,6 +93,7 @@ class GameScene extends Phaser.Scene {
     }
 
     spawnObstacle() {
+        // On allonge le délai, aléatoire entre 3s et 5s
         let delay = Phaser.Math.Between(3000, 5000);
         this.time.addEvent({
             delay: delay,
@@ -103,7 +104,8 @@ class GameScene extends Phaser.Scene {
 
         const x = 900;
         const isBear = Math.random() > 0.5;
-        const y = isBear ? 520 : 370;
+        // On place l'ours au sol (520), et le tapis volant bien plus haut (200)
+        const y = isBear ? 520 : 200;
         const key = isBear ? 'bear' : 'rug';
 
         let obstacle = this.obstacles.create(x, y, key);
@@ -116,7 +118,7 @@ class GameScene extends Phaser.Scene {
         const x = 900;
         const y = 520; // Pièce au sol
         let coin = this.coins.create(x, y, 'coin');
-        coin.setScale(0.05);
+        coin.setScale(0.05); // Pièce plus petite
         coin.setVelocityX(-200);
         coin.setCollideWorldBounds(false);
     }
@@ -154,10 +156,7 @@ const config = {
     height: 600,
     physics: {
         default: 'arcade',
-        arcade: {
-            gravity: { y: 500 },
-            debug: true // Affiche les hitboxes en surbrillance
-        }
+        arcade: { gravity: { y: 500 }, debug: false }
     },
     scene: GameScene
 };
