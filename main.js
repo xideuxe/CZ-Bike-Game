@@ -110,8 +110,8 @@ class GameScene extends Phaser.Scene {
 
         const x = 900;
         const isBear = Math.random() > 0.5;
-        // On place l'ours au sol (520), et le tapis volant bien plus haut (270)
-        const y = isBear ? 520 : 270;
+        // On place l'ours au sol (520), et le tapis volant bien plus haut (300)
+        const y = isBear ? 520 : 300;
         const key = isBear ? 'bear' : 'rug';
 
         let obstacle = this.obstacles.create(x, y, key);
