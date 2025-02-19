@@ -110,14 +110,23 @@ class GameScene extends Phaser.Scene {
 
         const x = 900;
         const isBear = Math.random() > 0.5;
-        // On place l'ours au sol (520), et le tapis volant bien plus haut (200)
-        const y = isBear ? 520 : 200;
+        // On place l'ours au sol (520), et le tapis volant bien plus haut (270)
+        const y = isBear ? 520 : 270;
         const key = isBear ? 'bear' : 'rug';
 
         let obstacle = this.obstacles.create(x, y, key);
         obstacle.setScale(isBear ? 0.2 : 0.3);
         obstacle.setVelocityX(-200);
         obstacle.setCollideWorldBounds(false);
+
+        // ✅ Ajustement des hitboxes
+        if (isBear) {
+            obstacle.body.setSize(40, 80);  // Ours → rectangle vertical plus étroit
+            obstacle.body.setOffset(10, 0);  // Décalage pour centrer la hitbox
+        } else {
+            obstacle.body.setSize(100, 30);  // Tapis → rectangle horizontal plus fin
+            obstacle.body.setOffset(0, 10);  // Ajuste pour ne pas dépasser du sprite
+        }
     }
 
     spawnCoin() {
