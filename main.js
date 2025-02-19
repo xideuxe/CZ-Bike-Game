@@ -22,7 +22,7 @@ class GameScene extends Phaser.Scene {
     create() {
         // (Optionnel) Affiche un background
         this.bg = this.add.image(400, 300, 'bg');
-        this.bg.setScale(2);
+        if (this.bg) this.bg.setScale(2);
 
         // Sol physique
         this.ground = this.physics.add.sprite(400, 580, 'ground');
@@ -43,16 +43,19 @@ class GameScene extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
 
         // Groupes
-        this.obstacles = this.physics.add.group({ allowGravity: false }); 
+        this.obstacles = this.physics.add.group({ allowGravity: false });
         this.coins = this.physics.add.group({ allowGravity: false });
 
         // Collisions & overlaps
         this.physics.add.collider(this.czBike, this.obstacles, this.hitObstacle, null, this);
         this.physics.add.overlap(this.czBike, this.coins, this.collectCoin, null, this);
 
-        // Timers
-        this.time.addEvent({ delay: 2000, callback: this.spawnObstacle, callbackScope: this, loop: true });
-        this.time.addEvent({ delay: 2000, callback: this.spawnCoin, callbackScope: this, loop: true });
+        // Une seule fois pour la 1ère apparition,
+        // ensuite on ré-appelle spawnObstacle depuis la fonction elle-même
+        this.spawnObstacle();
+
+        // Pièces toutes les 3 secondes
+        this.time.addEvent({ delay: 3000, callback: this.spawnCoin, callbackScope: this, loop: true });
 
         // Score
         this.score = 0;
@@ -63,18 +66,15 @@ class GameScene extends Phaser.Scene {
     }
 
     update() {
-        // Saut (flèche du haut), seulement si on touche le sol
+        // Saut
         if (this.cursors.up.isDown && this.czBike.body.touching.down) {
             this.czBike.setVelocityY(-300);
         }
-
-        // Se baisser (flèche du bas)
-        // On ne change pas l'image, juste la position Y si on est au sol
+        // Se baisser
         if (this.cursors.down.isDown && this.czBike.body.touching.down) {
-            this.czBike.y = 480; // Déplace un peu vers le bas
+            this.czBike.y = 480;
         }
         else if (this.czBike.body.touching.down) {
-            // Revenir à la position initiale
             this.czBike.y = 450;
         }
 
@@ -92,9 +92,19 @@ class GameScene extends Phaser.Scene {
     }
 
     spawnObstacle() {
+        // Espace entre deux obstacles => random
+        let delay = Phaser.Math.Between(2500, 4500); 
+        // On prévoit déjà le prochain spawn
+        this.time.addEvent({
+            delay: delay,
+            callback: this.spawnObstacle,
+            callbackScope: this,
+            loop: false
+        });
+
         const x = 900;
         const isBear = Math.random() > 0.5;
-        const y = isBear ? 520 : 370; 
+        const y = isBear ? 520 : 370;
         const key = isBear ? 'bear' : 'rug';
 
         let obstacle = this.obstacles.create(x, y, key);
@@ -105,9 +115,9 @@ class GameScene extends Phaser.Scene {
 
     spawnCoin() {
         const x = 900;
-        const y = 520; // Les pièces restent au sol
+        const y = 520; // Pièce au sol
         let coin = this.coins.create(x, y, 'coin');
-        coin.setScale(0.1); // Pièce plus petite
+        coin.setScale(0.01); // Pièce plus petite
         coin.setVelocityX(-200);
         coin.setCollideWorldBounds(false);
     }
