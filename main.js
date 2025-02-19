@@ -1,7 +1,6 @@
 class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
-        this.canJump = true;  // Variable pour autoriser ou empêcher un saut
     }
 
     preload() {
@@ -23,7 +22,9 @@ class GameScene extends Phaser.Scene {
     create() {
         // (Optionnel) Affiche un background
         this.bg = this.add.image(400, 300, 'bg');
-        if (this.bg) this.bg.setScale(2);
+        if (this.bg) {
+            this.bg.setScale(2);
+        }
 
         // Sol physique
         this.ground = this.physics.add.sprite(400, 580, 'ground');
@@ -33,18 +34,12 @@ class GameScene extends Phaser.Scene {
         this.ground.setOrigin(0.5, 1);
 
         // CZ Bike
-        this.czBike = this.physics.add.sprite(100, 450, 'czbike');
+        this.czBike = this.physics.add.sprite(100, 400, 'czbike');
         this.czBike.setCollideWorldBounds(true);
         this.czBike.setScale(0.3);
 
-        // Réduction de la hitbox du vélo
-        this.czBike.body.setSize(50, 50);
-        this.czBike.body.setOffset(10, 10);
-
         // Collision CZ Bike <-> sol
-        this.physics.add.collider(this.czBike, this.ground, () => {
-            this.canJump = true; // Le joueur peut sauter dès qu'il touche le sol
-        });
+        this.physics.add.collider(this.czBike, this.ground);
 
         // Contrôles
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -72,13 +67,12 @@ class GameScene extends Phaser.Scene {
     }
 
     update() {
-        // Saut avec une meilleure gestion
-        if (this.cursors.up.isDown && this.canJump) {
-            this.czBike.setVelocityY(-600);  // Augmenter la puissance du saut si nécessaire
-            this.canJump = false; // Bloque un autre saut tant qu'on n'a pas touché le sol
+        // Saut plus fort
+        if (this.cursors.up.isDown && this.czBike.body.touching.down) {
+            this.czBike.setVelocityY(-500);
         }
 
-        // Se baisser (réduit la hauteur du sprite)
+        // Se baisser
         if (this.cursors.down.isDown && this.czBike.body.touching.down) {
             this.czBike.y = 480;
         } else if (this.czBike.body.touching.down) {
@@ -99,7 +93,7 @@ class GameScene extends Phaser.Scene {
     }
 
     spawnObstacle() {
-        // Délai entre 3s et 5s
+        // On allonge le délai, aléatoire entre 3s et 5s
         let delay = Phaser.Math.Between(3000, 5000);
         this.time.addEvent({
             delay: delay,
@@ -110,8 +104,8 @@ class GameScene extends Phaser.Scene {
 
         const x = 900;
         const isBear = Math.random() > 0.5;
-        // On place l'ours au sol (520), et le tapis volant bien plus haut (200)
-        const y = isBear ? 520 : 200;
+        // On place l'ours au sol (520), et le tapis volant bien plus haut (270)
+        const y = isBear ? 520 : 270;
         const key = isBear ? 'bear' : 'rug';
 
         let obstacle = this.obstacles.create(x, y, key);
@@ -152,4 +146,19 @@ class GameScene extends Phaser.Scene {
     collectCoin(czBike, coin) {
         coin.disableBody(true, true);
         this.score += 10;
-        this.scoreText.s
+        this.scoreText.setText('Score: ' + this.score);
+    }
+}
+
+const config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    physics: {
+        default: 'arcade',
+        arcade: { gravity: { y: 500 }, debug: false }
+    },
+    scene: GameScene
+};
+
+const game = new Phaser.Game(config);
