@@ -32,18 +32,18 @@ class GameScene extends Phaser.Scene {
         this.ground.setScale(2);
         this.ground.setOrigin(0.5, 1);
 
-        // CZ Bike (PLACÉ PLUS HAUT AU DÉPART)
-        this.czBike = this.physics.add.sprite(100, 350, 'czbike');
+        // CZ Bike (REMONTÉ À y=320)
+        this.czBike = this.physics.add.sprite(100, 320, 'czbike');
         this.czBike.setCollideWorldBounds(true);
         this.czBike.setScale(0.3);
 
-        // Ajout d'une HITBOX plus petite pour éviter les collisions invisibles
+        // Ajout d'une HITBOX plus petite
         this.czBike.body.setSize(50, 50);
         this.czBike.body.setOffset(10, 10);
 
-        // Collision CZ Bike <-> sol pour détecter quand il peut sauter
+        // Collision CZ Bike <-> sol
         this.physics.add.collider(this.czBike, this.ground, () => {
-            this.canJump = true; // On autorise le saut
+            this.canJump = true; // Réactive le saut une fois au sol
         });
 
         // Contrôles
@@ -72,10 +72,10 @@ class GameScene extends Phaser.Scene {
     }
 
     update() {
-        // ✅ Saut qui fonctionne
+        // ✅ Saut ajusté
         if (this.cursors.up.isDown && this.canJump) {
-            this.czBike.setVelocityY(-600);  // Augmente la puissance du saut
-            this.canJump = false; // Désactive le saut jusqu'à ce qu'on retouche le sol
+            this.czBike.setVelocityY(-500);  // Ajusté pour éviter un saut trop fort
+            this.canJump = false;
         }
 
         // Se baisser
