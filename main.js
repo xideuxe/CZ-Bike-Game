@@ -34,7 +34,6 @@ class GameScene extends Phaser.Scene {
         this.ground.setOrigin(0.5, 1);
 
         // CZ Bike
-        // On place le vélo un peu plus haut pour mieux voir le saut
         this.czBike = this.physics.add.sprite(100, 400, 'czbike');
         this.czBike.setCollideWorldBounds(true);
         this.czBike.setScale(0.3);
@@ -68,7 +67,7 @@ class GameScene extends Phaser.Scene {
     }
 
     update() {
-        // Saut (plus fort pour mieux le voir)
+        // Saut plus fort
         if (this.cursors.up.isDown && this.czBike.body.touching.down) {
             this.czBike.setVelocityY(-500);
         }
@@ -77,7 +76,7 @@ class GameScene extends Phaser.Scene {
         if (this.cursors.down.isDown && this.czBike.body.touching.down) {
             this.czBike.y = 480;
         } else if (this.czBike.body.touching.down) {
-            this.czBike.y = 450;  // reviens à la hauteur initiale sur le sol
+            this.czBike.y = 450;
         }
 
         // Nettoyage hors écran
@@ -94,7 +93,6 @@ class GameScene extends Phaser.Scene {
     }
 
     spawnObstacle() {
-        // On allonge le délai, aléatoire entre 3s et 5s
         let delay = Phaser.Math.Between(3000, 5000);
         this.time.addEvent({
             delay: delay,
@@ -118,7 +116,7 @@ class GameScene extends Phaser.Scene {
         const x = 900;
         const y = 520; // Pièce au sol
         let coin = this.coins.create(x, y, 'coin');
-        coin.setScale(0.05); // Pièce encore plus petite
+        coin.setScale(0.05);
         coin.setVelocityX(-200);
         coin.setCollideWorldBounds(false);
     }
@@ -156,7 +154,10 @@ const config = {
     height: 600,
     physics: {
         default: 'arcade',
-        arcade: { gravity: { y: 500 }, debug: false }
+        arcade: {
+            gravity: { y: 500 },
+            debug: true // Affiche les hitboxes en surbrillance
+        }
     },
     scene: GameScene
 };
