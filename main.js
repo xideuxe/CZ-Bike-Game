@@ -1,6 +1,7 @@
 class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
+        this.canJump = true;  // Variable pour gérer le saut
     }
 
     preload() {
@@ -22,9 +23,7 @@ class GameScene extends Phaser.Scene {
     create() {
         // (Optionnel) Affiche un background
         this.bg = this.add.image(400, 300, 'bg');
-        if (this.bg) {
-            this.bg.setScale(2);
-        }
+        if (this.bg) this.bg.setScale(2);
 
         // Sol physique
         this.ground = this.physics.add.sprite(400, 580, 'ground');
@@ -33,13 +32,19 @@ class GameScene extends Phaser.Scene {
         this.ground.setScale(2);
         this.ground.setOrigin(0.5, 1);
 
-        // CZ Bike
-        this.czBike = this.physics.add.sprite(100, 400, 'czbike');
+        // CZ Bike (PLACÉ PLUS HAUT AU DÉPART)
+        this.czBike = this.physics.add.sprite(100, 350, 'czbike');
         this.czBike.setCollideWorldBounds(true);
         this.czBike.setScale(0.3);
 
-        // Collision CZ Bike <-> sol
-        this.physics.add.collider(this.czBike, this.ground);
+        // Ajout d'une HITBOX plus petite pour éviter les collisions invisibles
+        this.czBike.body.setSize(50, 50);
+        this.czBike.body.setOffset(10, 10);
+
+        // Collision CZ Bike <-> sol pour détecter quand il peut sauter
+        this.physics.add.collider(this.czBike, this.ground, () => {
+            this.canJump = true; // On autorise le saut
+        });
 
         // Contrôles
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -67,9 +72,10 @@ class GameScene extends Phaser.Scene {
     }
 
     update() {
-        // Saut plus fort
-        if (this.cursors.up.isDown && this.czBike.body.touching.down) {
-            this.czBike.setVelocityY(-500);
+        // ✅ Saut qui fonctionne
+        if (this.cursors.up.isDown && this.canJump) {
+            this.czBike.setVelocityY(-600);  // Augmente la puissance du saut
+            this.canJump = false; // Désactive le saut jusqu'à ce qu'on retouche le sol
         }
 
         // Se baisser
@@ -93,7 +99,7 @@ class GameScene extends Phaser.Scene {
     }
 
     spawnObstacle() {
-        // On allonge le délai, aléatoire entre 3s et 5s
+        // Délai entre 3s et 5s
         let delay = Phaser.Math.Between(3000, 5000);
         this.time.addEvent({
             delay: delay,
@@ -104,8 +110,8 @@ class GameScene extends Phaser.Scene {
 
         const x = 900;
         const isBear = Math.random() > 0.5;
-        // On place l'ours au sol (520), et le tapis volant bien plus haut (270)
-        const y = isBear ? 520 : 270;
+        // On place l'ours au sol (520), et le tapis volant bien plus haut (200)
+        const y = isBear ? 520 : 200;
         const key = isBear ? 'bear' : 'rug';
 
         let obstacle = this.obstacles.create(x, y, key);
@@ -156,7 +162,7 @@ const config = {
     height: 600,
     physics: {
         default: 'arcade',
-        arcade: { gravity: { y: 500 }, debug: false }
+        arcade: { gravity: { y: 500 }, debug: true }  // Debug activé pour voir les hitboxes
     },
     scene: GameScene
 };
