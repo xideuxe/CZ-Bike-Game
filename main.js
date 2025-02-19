@@ -1,141 +1,108 @@
 class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
-        this.canJump = true;  // Variable pour gérer le saut
+        this.canJump = true;  // Variable pour empêcher les sauts en l'air
     }
 
     preload() {
-        // (Optionnel) background
         this.load.image('bg', 'assets/background.png');
-
-        // Sol
         this.load.image('ground', 'assets/ground.png');
-
-        // CZ Bike
         this.load.image('czbike', 'assets/czbike.png');
-
-        // Obstacles & pièces
         this.load.image('bear', 'assets/bear.png');
         this.load.image('rug', 'assets/rug.png');
         this.load.image('coin', 'assets/coin.png');
     }
 
     create() {
-        // (Optionnel) Affiche un background
-        this.bg = this.add.image(400, 300, 'bg');
-        if (this.bg) this.bg.setScale(2);
+        // ✅ Ajout du background
+        this.bg = this.add.image(400, 300, 'bg').setScale(2);
 
-        // Sol physique
-        this.ground = this.physics.add.sprite(400, 580, 'ground');
-        this.ground.setImmovable(true);
-        this.ground.body.allowGravity = false;
-        this.ground.setScale(2);
-        this.ground.setOrigin(0.5, 1);
+        // ✅ Correction de la position du sol
+        this.ground = this.physics.add.staticSprite(400, 600, 'ground').setScale(2);
 
-        // CZ Bike (REMONTÉ À y=320)
-        this.czBike = this.physics.add.sprite(100, 320, 'czbike');
+        // ✅ Ajustement du placement du vélo
+        this.czBike = this.physics.add.sprite(100, 500, 'czbike').setScale(0.3);
         this.czBike.setCollideWorldBounds(true);
-        this.czBike.setScale(0.3);
 
-        // Ajout d'une HITBOX plus petite
+        // ✅ Réduction de la hitbox du vélo
         this.czBike.body.setSize(50, 50);
         this.czBike.body.setOffset(10, 10);
 
-        // Collision CZ Bike <-> sol
+        // ✅ Activation des collisions avec le sol
         this.physics.add.collider(this.czBike, this.ground, () => {
-            this.canJump = true; // Réactive le saut une fois au sol
+            this.canJump = true;
         });
 
-        // Contrôles
+        // ✅ Contrôles clavier
         this.cursors = this.input.keyboard.createCursorKeys();
 
-        // Groupes
-        this.obstacles = this.physics.add.group({ allowGravity: false });
-        this.coins = this.physics.add.group({ allowGravity: false });
+        // ✅ Groupes pour obstacles et pièces
+        this.obstacles = this.physics.add.group();
+        this.coins = this.physics.add.group();
 
-        // Collisions & overlaps
+        // ✅ Gestion des collisions
         this.physics.add.collider(this.czBike, this.obstacles, this.hitObstacle, null, this);
         this.physics.add.overlap(this.czBike, this.coins, this.collectCoin, null, this);
 
-        // Première apparition d'obstacle, puis enchaînement
+        // ✅ Apparition des obstacles
         this.spawnObstacle();
-
-        // Pièces toutes les 3 secondes
         this.time.addEvent({ delay: 3000, callback: this.spawnCoin, callbackScope: this, loop: true });
 
-        // Score
+        // ✅ Score
         this.score = 0;
-        this.scoreText = this.add.text(16, 16, 'Score: 0', {
-            fontSize: '32px',
-            fill: '#FFF'
-        });
+        this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#FFF' });
     }
 
     update() {
         // ✅ Saut ajusté
         if (this.cursors.up.isDown && this.canJump) {
-            this.czBike.setVelocityY(-500);  // Ajusté pour éviter un saut trop fort
+            this.czBike.setVelocityY(-500);
             this.canJump = false;
         }
 
-        // Se baisser
+        // ✅ Se baisser (en changeant la hitbox)
         if (this.cursors.down.isDown && this.czBike.body.touching.down) {
-            this.czBike.y = 480;
-        } else if (this.czBike.body.touching.down) {
-            this.czBike.y = 450;
+            this.czBike.body.setSize(50, 30);  // Réduit la hitbox en se baissant
+        } else {
+            this.czBike.body.setSize(50, 50);
         }
 
-        // Nettoyage hors écran
+        // ✅ Nettoyage des éléments hors écran
         this.obstacles.getChildren().forEach(obstacle => {
-            if (obstacle.x < -obstacle.displayWidth) {
-                obstacle.destroy();
-            }
+            if (obstacle.x < -obstacle.displayWidth) obstacle.destroy();
         });
+
         this.coins.getChildren().forEach(coin => {
-            if (coin.x < -coin.displayWidth) {
-                coin.destroy();
-            }
+            if (coin.x < -coin.displayWidth) coin.destroy();
         });
     }
 
     spawnObstacle() {
-        // Délai entre 3s et 5s
         let delay = Phaser.Math.Between(3000, 5000);
-        this.time.addEvent({
-            delay: delay,
-            callback: this.spawnObstacle,
-            callbackScope: this,
-            loop: false
-        });
+        this.time.addEvent({ delay: delay, callback: this.spawnObstacle, callbackScope: this });
 
         const x = 900;
         const isBear = Math.random() > 0.5;
-        // On place l'ours au sol (520), et le tapis volant bien plus haut (300)
-        const y = isBear ? 520 : 300;
+        const y = isBear ? 520 : 270;
         const key = isBear ? 'bear' : 'rug';
 
         let obstacle = this.obstacles.create(x, y, key);
-        obstacle.setScale(isBear ? 0.2 : 0.3);
-        obstacle.setVelocityX(-200);
-        obstacle.setCollideWorldBounds(false);
+        obstacle.setScale(isBear ? 0.2 : 0.3).setVelocityX(-200);
 
         // ✅ Ajustement des hitboxes
         if (isBear) {
-            obstacle.body.setSize(40, 80);  // Ours → rectangle vertical plus étroit
-            obstacle.body.setOffset(10, 0);  // Décalage pour centrer la hitbox
+            obstacle.body.setSize(40, 80);
+            obstacle.body.setOffset(10, 0);
         } else {
-            obstacle.body.setSize(100, 30);  // Tapis → rectangle horizontal plus fin
-            obstacle.body.setOffset(0, 10);  // Ajuste pour ne pas dépasser du sprite
+            obstacle.body.setSize(100, 30);
+            obstacle.body.setOffset(0, 10);
         }
     }
 
     spawnCoin() {
         const x = 900;
-        const y = 520; // Pièce au sol
-        let coin = this.coins.create(x, y, 'coin');
-        coin.setScale(0.05); // Pièce plus petite
-        coin.setVelocityX(-200);
-        coin.setCollideWorldBounds(false);
+        const y = 520;
+        let coin = this.coins.create(x, y, 'coin').setScale(0.05).setVelocityX(-200);
     }
 
     hitObstacle(czBike, obstacle) {
@@ -143,19 +110,9 @@ class GameScene extends Phaser.Scene {
         czBike.setTint(0xff0000);
 
         let message = obstacle.texture.key === 'bear' ? 'Bear Market' : 'Rug!';
-        this.add.text(400, 300, message, {
-            fontSize: '64px',
-            fill: '#FF0000'
-        }).setOrigin(0.5);
+        this.add.text(400, 300, message, { fontSize: '64px', fill: '#FF0000' }).setOrigin(0.5);
 
-        this.time.addEvent({
-            delay: 2000,
-            callback: () => {
-                this.scene.restart();
-            },
-            callbackScope: this,
-            loop: false
-        });
+        this.time.addEvent({ delay: 2000, callback: () => this.scene.restart(), callbackScope: this });
     }
 
     collectCoin(czBike, coin) {
@@ -169,10 +126,7 @@ const config = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
-    physics: {
-        default: 'arcade',
-        arcade: { gravity: { y: 500 }, debug: true }  // Debug activé pour voir les hitboxes
-    },
+    physics: { default: 'arcade', arcade: { gravity: { y: 500 }, debug: true } },
     scene: GameScene
 };
 
