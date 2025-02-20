@@ -1,11 +1,11 @@
 class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
-        this.canJump = true;  // Gestion du saut
+        this.canJump = true;  // Variable pour gérer le saut
     }
 
     preload() {
-        // Background
+        // (Optionnel) background
         this.load.image('bg', 'assets/background.png');
 
         // Sol
@@ -21,62 +21,65 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
-        // **Ajout du background**
+        // ✅ Ajoute un background
         this.bg = this.add.image(400, 300, 'bg');
         if (this.bg) this.bg.setScale(2);
 
-        // **Sol physique + scrolling**
-        this.ground = this.add.tileSprite(400, 580, 800, 100, 'ground');
-        this.physics.add.existing(this.ground, true);
+        // ✅ Création du sol en tant qu'objet statique
+        this.ground = this.physics.add.staticGroup();
+        let groundSprite = this.ground.create(400, 580, 'ground');  // 580 = bien au sol
+        groundSprite.setScale(2).refreshBody(); // Ajuste la taille
 
-        // **CZ Bike**
-        this.czBike = this.physics.add.sprite(100, 450, 'czbike');
+        // ✅ Création du vélo bien positionné
+        this.czBike = this.physics.add.sprite(100, 500, 'czbike');  // 500 pour qu'il repose bien sur le sol
         this.czBike.setCollideWorldBounds(true);
         this.czBike.setScale(0.3);
 
-        // **Collision CZ Bike <-> sol**
+        // ✅ Ajout d'une hitbox plus petite
+        this.czBike.body.setSize(50, 50);
+        this.czBike.body.setOffset(10, 10);
+
+        // ✅ Collision du vélo avec le sol
         this.physics.add.collider(this.czBike, this.ground, () => {
-            this.canJump = true; // ✅ On autorise le saut uniquement si le vélo touche bien le sol
+            this.canJump = true; // Réactive le saut après avoir touché le sol
         });
 
-        // **Contrôles**
+        // ✅ Gestion des contrôles
         this.cursors = this.input.keyboard.createCursorKeys();
 
-        // **Groupes pour les obstacles et pièces**
+        // ✅ Groupes pour obstacles et pièces
         this.obstacles = this.physics.add.group({ allowGravity: false });
         this.coins = this.physics.add.group({ allowGravity: false });
 
-        // **Collisions & overlaps**
+        // ✅ Collisions & interactions
         this.physics.add.collider(this.czBike, this.obstacles, this.hitObstacle, null, this);
         this.physics.add.overlap(this.czBike, this.coins, this.collectCoin, null, this);
 
-        // **Apparition des obstacles et pièces**
+        // ✅ Premiers spawns
         this.spawnObstacle();
         this.time.addEvent({ delay: 3000, callback: this.spawnCoin, callbackScope: this, loop: true });
 
-        // **Score**
+        // ✅ Score
         this.score = 0;
-        this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#FFF' });
+        this.scoreText = this.add.text(16, 16, 'Score: 0', {
+            fontSize: '32px',
+            fill: '#FFF'
+        });
     }
 
     update() {
-        // **Fait défiler le sol**
-        this.ground.tilePositionX += 5;
-
-        // **Vérification du saut**
-        if (this.cursors.up.isDown && this.czBike.body.blocked.down) {
+        // ✅ Correction du saut (le joueur peut sauter uniquement s'il touche le sol)
+        if (this.cursors.up.isDown && this.canJump) {
             this.czBike.setVelocityY(-500);
             this.canJump = false;
         }
 
-        // **Se baisser**
-        if (this.cursors.down.isDown && this.czBike.body.blocked.down) {
-            this.czBike.y = 480;
-        } else if (this.czBike.body.blocked.down) {
-            this.czBike.y = 450;
+        // ✅ Réactive le saut quand il retouche le sol
+        if (this.czBike.body.touching.down) {
+            this.canJump = true;
         }
 
-        // **Nettoyage hors écran**
+        // ✅ Nettoyage des obstacles et pièces hors écran
         this.obstacles.getChildren().forEach(obstacle => {
             if (obstacle.x < -obstacle.displayWidth) {
                 obstacle.destroy();
@@ -90,26 +93,42 @@ class GameScene extends Phaser.Scene {
     }
 
     spawnObstacle() {
-        // **Délai entre 2s et 4s pour plus de variation**
-        let delay = Phaser.Math.Between(2000, 4000);
-        this.time.addEvent({ delay: delay, callback: this.spawnObstacle, callbackScope: this, loop: false });
+        // ✅ Délai entre 2.5s et 4.5s
+        let delay = Phaser.Math.Between(2500, 4500);
+        this.time.addEvent({
+            delay: delay,
+            callback: this.spawnObstacle,
+            callbackScope: this,
+            loop: false
+        });
 
+        // ✅ Position et type d'obstacle
         const x = 900;
-        const y = 520;  // ✅ Tous les obstacles sont au sol
-        const key = Math.random() > 0.5 ? 'bear' : 'rug';
+        const isBear = Math.random() > 0.5;
+        const y = 520; // Tous les obstacles sont au sol désormais
+        const key = isBear ? 'bear' : 'rug';
 
         let obstacle = this.obstacles.create(x, y, key);
-        obstacle.setScale(0.2);
-        obstacle.setVelocityX(-300);  // ✅ Augmentation de la vitesse de déplacement
+        obstacle.setScale(isBear ? 0.2 : 0.3);
+        obstacle.setVelocityX(-300); // ✅ Accélération des obstacles
         obstacle.setCollideWorldBounds(false);
+
+        // ✅ Ajustement des hitboxes
+        if (isBear) {
+            obstacle.body.setSize(40, 80);  // Ours → rectangle vertical
+            obstacle.body.setOffset(10, 0);
+        } else {
+            obstacle.body.setSize(100, 30);  // Tapis → rectangle horizontal
+            obstacle.body.setOffset(0, 10);
+        }
     }
 
     spawnCoin() {
         const x = 900;
-        const y = 500; // ✅ Pièces légèrement au-dessus du sol
+        const y = 520; // Pièce au sol
         let coin = this.coins.create(x, y, 'coin');
-        coin.setScale(0.05); // Pièce plus petite
-        coin.setVelocityX(-300);  // ✅ Augmentation de la vitesse des pièces
+        coin.setScale(0.05); // ✅ Pièce plus petite
+        coin.setVelocityX(-300); // ✅ Accélération des pièces
         coin.setCollideWorldBounds(false);
     }
 
@@ -118,9 +137,19 @@ class GameScene extends Phaser.Scene {
         czBike.setTint(0xff0000);
 
         let message = obstacle.texture.key === 'bear' ? 'Bear Market' : 'Rug!';
-        this.add.text(400, 300, message, { fontSize: '64px', fill: '#FF0000' }).setOrigin(0.5);
+        this.add.text(400, 300, message, {
+            fontSize: '64px',
+            fill: '#FF0000'
+        }).setOrigin(0.5);
 
-        this.time.addEvent({ delay: 2000, callback: () => { this.scene.restart(); }, callbackScope: this, loop: false });
+        this.time.addEvent({
+            delay: 2000,
+            callback: () => {
+                this.scene.restart();
+            },
+            callbackScope: this,
+            loop: false
+        });
     }
 
     collectCoin(czBike, coin) {
@@ -136,7 +165,7 @@ const config = {
     height: 600,
     physics: {
         default: 'arcade',
-        arcade: { gravity: { y: 500 }, debug: true }  // Debug activé pour voir les hitboxes
+        arcade: { gravity: { y: 500 }, debug: true }  // ✅ Debug activé pour voir les hitboxes
     },
     scene: GameScene
 };
